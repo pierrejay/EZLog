@@ -63,7 +63,7 @@ log::ln(INFO, "Simple info message");
 
 #### Console Output
 ```
-[I|2420936.938|test_main.cpp:61|my-app] Simple info message
+I 2420936.938 my-app Simple info message [test_main.cpp:61]
 ```
 
 #### JSON Output
@@ -94,7 +94,7 @@ log::ln(WARN, "Warning: temperature = %.2f°C", 65.67f);
 
 #### Console Output
 ```
-[W|2420937.145|test_main.cpp:67|my-app] Warning: temperature = 65.67°C
+W 2420937.145 my-app Warning: temperature = 65.67°C [test_main.cpp:67]
 ```
 
 #### JSON Output
@@ -152,7 +152,7 @@ log::evt(ERROR, ModbusLog{
 
 #### Console Output
 ```
-[E|2420937.772|test_main.cpp:120|my-app] Modbus: read TEMP_PV (input 100) val=0.000 FAIL - Sensor communication failed
+E 2420937.772 my-app Modbus: read TEMP_PV (input 100) val=0.000 FAIL - Sensor communication failed [test_main.cpp:120]
 ```
 
 #### JSON Output
@@ -939,7 +939,7 @@ build_flags =
 
 **Console output example:**
 ```
-[I|2420936.938|main.cpp:61|my-app] Modbus: read TEMP_PV (holding 100) val=25.500 OK <84>
+I 2420936.938 my-app Modbus: read TEMP_PV (holding 100) val=25.500 OK [main.cpp:61] <84>
 ```
 
 The `_size` field and `<size>` suffix show the **actual formatted size** including all formatting, metadata, and null terminator (and obviously excluding themselves). This is the real size that counts against your buffer limits.

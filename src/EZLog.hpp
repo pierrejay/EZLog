@@ -726,9 +726,9 @@ struct TextLog {
     static constexpr const char* NAME = "Text";
 
     // No-op methods (text is managed in the global "message" field)
-    size_t toConsole(char* out, size_t cap) const { return 0; }
+    size_t toConsole([[maybe_unused]] char* out, [[maybe_unused]] size_t cap) const { return 0; }
 
-    void toJson(JsonBuilder& jb) const {
+    void toJson([[maybe_unused]] JsonBuilder& jb) const {
         // No structured data for TextLog (text is in "message" field)
     }
 };
@@ -1047,24 +1047,20 @@ private:
 
         #if (LOG_ENABLE_CONSOLE || LOG_ENABLE_TEXT_MSGBUF)
                 // Build complete line with prefix + body + newline
+                // Format: "I 13.586 TAG message [file.cpp:123]"
                 CharBuffer cb(line, sizeof(line));
 
-                // Add prefix
-                cb.push('[');
+                // Add prefix: level + timestamp + tag
                 cb.push(toShortString(rec.level));
                 #if (LOG_CONSOLE_SHOW_TIMESTAMP)
-                    cb.push('|');
+                    cb.push(' ');
                     cb.push(ts);
                 #endif
-                #if (LOG_CONSOLE_SOURCE_CTX)
-                    cb.push('|');
-                    cb.push(ctxStr);
-                #endif
                 if (rec.tag && *rec.tag) {
-                    cb.push('|');
+                    cb.push(' ');
                     cb.push(rec.tag);
                 }
-                cb.push("] ");
+                cb.push(' ');
 
                 // Add body (event content)
                 if constexpr (std::is_same_v<EventType, TextLog>) {
@@ -1087,6 +1083,13 @@ private:
                         cb.push(rec.message);
                     }
                 }
+
+                // Add source context at the end [file.cpp:123]
+                #if (LOG_CONSOLE_SOURCE_CTX)
+                    cb.push(" [");
+                    cb.push(ctxStr);
+                    cb.push(']');
+                #endif
 
             #ifdef LOG_CONSOLE_DEBUG_SIZE
                 // Inject size indicator showing line size BEFORE this debug suffix
@@ -1544,7 +1547,7 @@ public:
         * @note Formatted strings use vsnprintf() which is NOT ISR-safe
         */
     template<typename... Args>
-    static void lnFromISR(const LevelArg& arg, const char* fmt, Args&&... args) {
+    static void lnFromISR([[maybe_unused]] const LevelArg& arg, [[maybe_unused]] const char* fmt, [[maybe_unused]] Args&&... args) {
         static_assert(sizeof...(Args) == -1,
             "Formatted strings are not supported in ISR context. Use lnFromISR() with string literals only.");
     }
@@ -1580,18 +1583,20 @@ public:
     // No-op implementations when global logging is disabled
     // Totally removes all logging code from the build with -O2 or -Os
     // (will not even evaluate args)
+    // Note: explicit LevelArg overloads needed because brace-init {LEVEL, loc}
+    // cannot deduce template Args in the variadic version
 
     template<typename... Args>
-    static constexpr void ln(Args&&...) {}
+    static constexpr void ln(const LevelArg&, Args&&...) {}
 
     template<typename... Args>
-    static constexpr void evt(Args&&...) {}
+    static constexpr void evt(const LevelArg&, Args&&...) {}
 
     template<typename... Args>
-    static constexpr void lnFromISR(Args&&...) {}
+    static constexpr void lnFromISR(const LevelArg&, Args&&...) {}
 
     template<typename... Args>
-    static constexpr void evtFromISR(Args&&...) {}
+    static constexpr void evtFromISR(const LevelArg&, Args&&...) {}
 
 #endif // LOG_ENABLED_GLOBAL
 
